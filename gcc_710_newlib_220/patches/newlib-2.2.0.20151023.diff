@@ -1,0 +1,1241 @@
+diff -Naur newlib-2.2.0.20151023/newlib/configure.host newlib-2.2.0.20151023_new/newlib/configure.host
+--- newlib-2.2.0.20151023/newlib/configure.host	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/configure.host	2019-08-19 13:05:34.700000000 -0400
+@@ -267,6 +267,7 @@
+ 	;;
+   sh | sh64)
+ 	machine_dir=sh
++	newlib_cflags="${newlib_cflags} -DREENTRANT_SYSCALLS_PROVIDED -DMALLOC_PROVIDED -DABORT_PROVIDED -DHAVE_FCNTL -ffunction-sections -fdata-sections"
+ 	;;
+   sparc*)
+ 	machine_dir=sparc
+diff -Naur newlib-2.2.0.20151023/newlib/libc/include/assert.h newlib-2.2.0.20151023_new/newlib/libc/include/assert.h
+--- newlib-2.2.0.20151023/newlib/libc/include/assert.h	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/include/assert.h	2019-08-19 13:05:34.700000000 -0400
+@@ -13,8 +13,8 @@
+ #ifdef NDEBUG           /* required by ANSI standard */
+ # define assert(__e) ((void)0)
+ #else
+-# define assert(__e) ((__e) ? (void)0 : __assert_func (__FILE__, __LINE__, \
+-						       __ASSERT_FUNC, #__e))
++# define assert(__e) ((__e) ? (void)0 : __assert (__FILE__, __LINE__, \
++						       #__e, (char *)0, __ASSERT_FUNC))
+ 
+ # ifndef __ASSERT_FUNC
+   /* Use g++'s demangled names in C++.  */
+@@ -36,10 +36,8 @@
+ # endif /* !__ASSERT_FUNC */
+ #endif /* !NDEBUG */
+ 
+-void _EXFUN(__assert, (const char *, int, const char *)
+-	    _ATTRIBUTE ((__noreturn__)));
+-void _EXFUN(__assert_func, (const char *, int, const char *, const char *)
+-	    _ATTRIBUTE ((__noreturn__)));
++void _EXFUN(__assert, (const char *, int, const char *, const char *,
++                       const char *) _ATTRIBUTE ((__noreturn__)));
+ 
+ #if __STDC_VERSION__ >= 201112L && !defined __cplusplus
+ # define static_assert _Static_assert
+diff -Naur newlib-2.2.0.20151023/newlib/libc/include/machine/_default_types.h newlib-2.2.0.20151023_new/newlib/libc/include/machine/_default_types.h
+--- newlib-2.2.0.20151023/newlib/libc/include/machine/_default_types.h	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/include/machine/_default_types.h	2019-08-19 13:05:34.700000000 -0400
+@@ -7,6 +7,8 @@
+ 
+ #include <sys/features.h>
+ 
++#include <sys/features.h>
++
+ /*
+  * Guess on types by examining *_MIN / *_MAX defines.
+  */
+diff -Naur newlib-2.2.0.20151023/newlib/libc/include/machine/_default_types.h.orig newlib-2.2.0.20151023_new/newlib/libc/include/machine/_default_types.h.orig
+--- newlib-2.2.0.20151023/newlib/libc/include/machine/_default_types.h.orig	1969-12-31 19:00:00.000000000 -0500
++++ newlib-2.2.0.20151023_new/newlib/libc/include/machine/_default_types.h.orig	2015-10-23 08:30:40.000000000 -0400
+@@ -0,0 +1,220 @@
++/*
++ *  $Id$
++ */
++
++#ifndef _MACHINE__DEFAULT_TYPES_H
++#define _MACHINE__DEFAULT_TYPES_H
++
++#include <sys/features.h>
++
++/*
++ * Guess on types by examining *_MIN / *_MAX defines.
++ */
++#if __GNUC_PREREQ (3, 3)
++/* GCC >= 3.3.0 has __<val>__ implicitly defined. */
++#define __EXP(x) __##x##__
++#else
++/* Fall back to POSIX versions from <limits.h> */
++#define __EXP(x) x
++#include <limits.h>
++#endif
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifdef __INT8_TYPE__
++typedef __INT8_TYPE__ __int8_t;
++#ifdef __UINT8_TYPE__
++typedef __UINT8_TYPE__ __uint8_t;
++#else
++typedef unsigned __INT8_TYPE__ __uint8_t;
++#endif
++#define ___int8_t_defined 1
++#elif __EXP(SCHAR_MAX) == 0x7f
++typedef signed char __int8_t ;
++typedef unsigned char __uint8_t ;
++#define ___int8_t_defined 1
++#endif
++
++#ifdef __INT16_TYPE__
++typedef __INT16_TYPE__ __int16_t;
++#ifdef __UINT16_TYPE__
++typedef __UINT16_TYPE__ __uint16_t;
++#else
++typedef unsigned __INT16_TYPE__ __uint16_t;
++#endif
++#define ___int16_t_defined 1
++#elif __EXP(INT_MAX) == 0x7fff
++typedef signed int __int16_t;
++typedef unsigned int __uint16_t;
++#define ___int16_t_defined 1
++#elif __EXP(SHRT_MAX) == 0x7fff
++typedef signed short __int16_t;
++typedef unsigned short __uint16_t;
++#define ___int16_t_defined 1
++#elif __EXP(SCHAR_MAX) == 0x7fff
++typedef signed char __int16_t;
++typedef unsigned char __uint16_t;
++#define ___int16_t_defined 1
++#endif
++
++#ifdef __INT32_TYPE__
++typedef __INT32_TYPE__ __int32_t;
++#ifdef __UINT32_TYPE__
++typedef __UINT32_TYPE__ __uint32_t;
++#else
++typedef unsigned __INT32_TYPE__ __uint32_t;
++#endif
++#define ___int32_t_defined 1
++#elif __EXP(INT_MAX) == 0x7fffffffL
++typedef signed int __int32_t;
++typedef unsigned int __uint32_t;
++#define ___int32_t_defined 1
++#elif __EXP(LONG_MAX) == 0x7fffffffL
++typedef signed long __int32_t;
++typedef unsigned long __uint32_t;
++#define ___int32_t_defined 1
++#elif __EXP(SHRT_MAX) == 0x7fffffffL
++typedef signed short __int32_t;
++typedef unsigned short __uint32_t;
++#define ___int32_t_defined 1
++#elif __EXP(SCHAR_MAX) == 0x7fffffffL
++typedef signed char __int32_t;
++typedef unsigned char __uint32_t;
++#define ___int32_t_defined 1
++#endif
++
++#ifdef __INT64_TYPE__
++typedef __INT64_TYPE__ __int64_t;
++#ifdef __UINT64_TYPE__
++typedef __UINT64_TYPE__ __uint64_t;
++#else
++typedef unsigned __INT64_TYPE__ __uint64_t;
++#endif
++#define ___int64_t_defined 1
++#elif __EXP(LONG_MAX) > 0x7fffffff
++typedef signed long __int64_t;
++typedef unsigned long __uint64_t;
++#define ___int64_t_defined 1
++
++/* GCC has __LONG_LONG_MAX__ */
++#elif  defined(__LONG_LONG_MAX__) && (__LONG_LONG_MAX__ > 0x7fffffff)
++typedef signed long long __int64_t;
++typedef unsigned long long __uint64_t;
++#define ___int64_t_defined 1
++
++/* POSIX mandates LLONG_MAX in <limits.h> */
++#elif  defined(LLONG_MAX) && (LLONG_MAX > 0x7fffffff)
++typedef signed long long __int64_t;
++typedef unsigned long long __uint64_t;
++#define ___int64_t_defined 1
++
++#elif  __EXP(INT_MAX) > 0x7fffffff
++typedef signed int __int64_t;
++typedef unsigned int __uint64_t;
++#define ___int64_t_defined 1
++#endif
++
++#ifdef __INT_LEAST8_TYPE__
++typedef __INT_LEAST8_TYPE__ __int_least8_t;
++#ifdef __UINT_LEAST8_TYPE__
++typedef __UINT_LEAST8_TYPE__ __uint_least8_t;
++#else
++typedef unsigned __INT_LEAST8_TYPE__ __uint_least8_t;
++#endif
++#define ___int_least8_t_defined 1
++#elif defined(___int8_t_defined)
++typedef __int8_t __int_least8_t;
++typedef __uint8_t __uint_least8_t;
++#define ___int_least8_t_defined 1
++#elif defined(___int16_t_defined)
++typedef __int16_t __int_least8_t;
++typedef __uint16_t __uint_least8_t;
++#define ___int_least8_t_defined 1
++#elif defined(___int32_t_defined)
++typedef __int32_t __int_least8_t;
++typedef __uint32_t __uint_least8_t;
++#define ___int_least8_t_defined 1
++#elif defined(___int64_t_defined)
++typedef __int64_t __int_least8_t;
++typedef __uint64_t __uint_least8_t;
++#define ___int_least8_t_defined 1
++#endif
++
++#ifdef __INT_LEAST16_TYPE__
++typedef __INT_LEAST16_TYPE__ __int_least16_t;
++#ifdef __UINT_LEAST16_TYPE__
++typedef __UINT_LEAST16_TYPE__ __uint_least16_t;
++#else
++typedef unsigned __INT_LEAST16_TYPE__ __uint_least16_t;
++#endif
++#define ___int_least16_t_defined 1
++#elif defined(___int16_t_defined)
++typedef __int16_t __int_least16_t;
++typedef __uint16_t __uint_least16_t;
++#define ___int_least16_t_defined 1
++#elif defined(___int32_t_defined)
++typedef __int32_t __int_least16_t;
++typedef __uint32_t __uint_least16_t;
++#define ___int_least16_t_defined 1
++#elif defined(___int64_t_defined)
++typedef __int64_t __int_least16_t;
++typedef __uint64_t __uint_least16_t;
++#define ___int_least16_t_defined 1
++#endif
++
++#ifdef __INT_LEAST32_TYPE__
++typedef __INT_LEAST32_TYPE__ __int_least32_t;
++#ifdef __UINT_LEAST32_TYPE__
++typedef __UINT_LEAST32_TYPE__ __uint_least32_t;
++#else
++typedef unsigned __INT_LEAST32_TYPE__ __uint_least32_t;
++#endif
++#define ___int_least32_t_defined 1
++#elif defined(___int32_t_defined)
++typedef __int32_t __int_least32_t;
++typedef __uint32_t __uint_least32_t;
++#define ___int_least32_t_defined 1
++#elif defined(___int64_t_defined)
++typedef __int64_t __int_least32_t;
++typedef __uint64_t __uint_least32_t;
++#define ___int_least32_t_defined 1
++#endif
++
++#ifdef __INT_LEAST64_TYPE__
++typedef __INT_LEAST64_TYPE__ __int_least64_t;
++#ifdef __UINT_LEAST64_TYPE__
++typedef __UINT_LEAST64_TYPE__ __uint_least64_t;
++#else
++typedef unsigned __INT_LEAST64_TYPE__ __uint_least64_t;
++#endif
++#define ___int_least64_t_defined 1
++#elif defined(___int64_t_defined)
++typedef __int64_t __int_least64_t;
++typedef __uint64_t __uint_least64_t;
++#define ___int_least64_t_defined 1
++#endif
++
++#ifdef __INTPTR_TYPE__
++typedef __INTPTR_TYPE__ __intptr_t;
++#ifdef __UINTPTR_TYPE__
++typedef __UINTPTR_TYPE__ __uintptr_t;
++#else
++typedef unsigned __INTPTR_TYPE__ __uintptr_t;
++#endif
++#elif defined(__PTRDIFF_TYPE__)
++typedef __PTRDIFF_TYPE__ __intptr_t;
++typedef unsigned __PTRDIFF_TYPE__ __uintptr_t;
++#else
++typedef long __intptr_t;
++typedef unsigned long __uintptr_t;
++#endif
++
++#undef __EXP
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* _MACHINE__DEFAULT_TYPES_H */
+diff -Naur newlib-2.2.0.20151023/newlib/libc/include/sys/types.h newlib-2.2.0.20151023_new/newlib/libc/include/sys/types.h
+--- newlib-2.2.0.20151023/newlib/libc/include/sys/types.h	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/include/sys/types.h	2019-08-19 13:05:34.700000000 -0400
+@@ -297,7 +297,7 @@
+ 
+ #if defined(__XMK__)
+ typedef unsigned int pthread_t;          /* identify a thread */
+-#else
++#elif !defined(_arch_dreamcast)
+ typedef __uint32_t pthread_t;            /* identify a thread */
+ #endif
+ 
+@@ -319,6 +319,7 @@
+   #include <sys/cpuset.h>
+ #endif
+ 
++#if !defined(_arch_dreamcast)
+ #if defined(__XMK__)
+ typedef struct pthread_attr_s {
+   int contentionscope;
+@@ -356,6 +357,7 @@
+ } pthread_attr_t;
+ 
+ #endif /* !defined(__XMK__) */
++#endif /* !defined(_arch_dreamcast) */
+ 
+ #if defined(_POSIX_THREAD_PROCESS_SHARED)
+ /* NOTE: P1003.1c/D10, p. 81 defines following values for process_shared.  */
+@@ -432,6 +434,7 @@
+ } pthread_mutexattr_t;
+ 
+ #else /* !defined(__XMK__) */
++#if !defined(_arch_dreamcast)
+ typedef __uint32_t pthread_mutex_t;      /* identify a mutex */
+ 
+ typedef struct {
+@@ -448,10 +451,12 @@
+ #endif
+   int   recursive;
+ } pthread_mutexattr_t;
++#endif /* !defined(_arch_dreamcast) */
+ #endif /* !defined(__XMK__) */
+ 
+ /* Condition Variables */
+ 
++#if !defined(_arch_dreamcast)
+ typedef __uint32_t pthread_cond_t;       /* identify a condition variable */
+ 
+ typedef struct {
+@@ -460,15 +465,18 @@
+   int   process_shared;       /* allow this to be shared amongst processes */
+ #endif
+ } pthread_condattr_t;         /* a condition attribute object */
++#endif /* !defined(_arch_dreamcast) */
+ 
+ /* Keys */
+ 
++#if !defined(_arch_dreamcast)
+ typedef __uint32_t pthread_key_t;        /* thread-specific data keys */
+ 
+ typedef struct {
+   int   is_initialized;  /* is this structure initialized? */
+   int   init_executed;   /* has the initialization routine been run? */
+ } pthread_once_t;       /* dynamic package initialization */
++#endif /* !defined(_arch_dreamcast) */
+ #else
+ #if defined (__CYGWIN__)
+ #include <cygwin/types.h>
+diff -Naur newlib-2.2.0.20151023/newlib/libc/include/sys/types.h.orig newlib-2.2.0.20151023_new/newlib/libc/include/sys/types.h.orig
+--- newlib-2.2.0.20151023/newlib/libc/include/sys/types.h.orig	1969-12-31 19:00:00.000000000 -0500
++++ newlib-2.2.0.20151023_new/newlib/libc/include/sys/types.h.orig	2015-10-23 08:30:40.000000000 -0400
+@@ -0,0 +1,514 @@
++/* unified sys/types.h: 
++   start with sef's sysvi386 version.
++   merge go32 version -- a few ifdefs.
++   h8300hms, h8300xray, and sysvnecv70 disagree on the following types:
++
++   typedef int gid_t;
++   typedef int uid_t;
++   typedef int dev_t;
++   typedef int ino_t;
++   typedef int mode_t;
++   typedef int caddr_t;
++
++   however, these aren't "reasonable" values, the sysvi386 ones make far 
++   more sense, and should work sufficiently well (in particular, h8300 
++   doesn't have a stat, and the necv70 doesn't matter.) -- eichin
++ */
++
++#ifndef _SYS_TYPES_H
++
++#include <_ansi.h>
++# include <sys/cdefs.h>
++
++#ifndef __INTTYPES_DEFINED__
++#define __INTTYPES_DEFINED__
++
++#include <machine/_types.h>
++
++#if defined(__rtems__) || defined(__XMK__)
++/*
++ *  The following section is RTEMS specific and is needed to more
++ *  closely match the types defined in the BSD sys/types.h.
++ *  This is needed to let the RTEMS/BSD TCP/IP stack compile.
++ */
++
++/* deprecated */
++#if ___int8_t_defined
++typedef __uint8_t	u_int8_t;
++#endif
++#if ___int16_t_defined
++typedef __uint16_t	u_int16_t;
++#endif 
++#if ___int32_t_defined
++typedef __uint32_t	u_int32_t;
++#endif
++
++#if ___int64_t_defined
++typedef __uint64_t	u_int64_t;
++
++/* deprecated */
++typedef	__uint64_t	u_quad_t;
++typedef	__int64_t	quad_t;
++typedef	quad_t *	qaddr_t;
++#endif
++
++#endif
++
++#endif /* ! __INTTYPES_DEFINED */
++
++#ifndef __need_inttypes
++
++#define _SYS_TYPES_H
++#include <sys/_types.h>
++#include <sys/_stdint.h>
++
++#ifdef __i386__
++#if defined (GO32) || defined (__MSDOS__)
++#define __MS_types__
++#endif
++#endif
++
++# include <stddef.h>
++# include <machine/types.h>
++
++/* To ensure the stat struct's layout doesn't change when sizeof(int), etc.
++   changes, we assume sizeof short and long never change and have all types
++   used to define struct stat use them and not int where possible.
++   Where not possible, _ST_INTxx are used.  It would be preferable to not have
++   such assumptions, but until the extra fluff is necessary, it's avoided.
++   No 64 bit targets use stat yet.  What to do about them is postponed
++   until necessary.  */
++#ifdef __GNUC__
++#define _ST_INT32 __attribute__ ((__mode__ (__SI__)))
++#else
++#define _ST_INT32
++#endif
++
++# if	__BSD_VISIBLE
++
++#  define	physadr		physadr_t
++#  define	quad		quad_t
++
++#ifndef _BSDTYPES_DEFINED
++/* also defined in mingw/gmon.h and in w32api/winsock[2].h */
++#ifndef __u_char_defined
++typedef	unsigned char	u_char;
++#define __u_char_defined
++#endif
++#ifndef __u_short_defined
++typedef	unsigned short	u_short;
++#define __u_short_defined
++#endif
++#ifndef __u_int_defined
++typedef	unsigned int	u_int;
++#define __u_int_defined
++#endif
++#ifndef __u_long_defined
++typedef	unsigned long	u_long;
++#define __u_long_defined
++#endif
++#define _BSDTYPES_DEFINED
++#endif
++
++typedef	unsigned short	ushort;		/* System V compatibility */
++typedef	unsigned int	uint;		/* System V compatibility */
++typedef	unsigned long	ulong;		/* System V compatibility */
++# endif	/*__BSD_VISIBLE */
++
++#ifndef __clock_t_defined
++typedef _CLOCK_T_ clock_t;
++#define __clock_t_defined
++#endif
++
++#ifndef __time_t_defined
++typedef _TIME_T_ time_t;
++#define __time_t_defined
++#endif
++
++#ifndef __daddr_t_defined
++typedef	long	daddr_t;
++#define __daddr_t_defined
++#endif
++#ifndef __caddr_t_defined
++typedef	char *	caddr_t;
++#define __caddr_t_defined
++#endif
++
++#ifndef __CYGWIN__
++#if defined(__MS_types__) || defined(__rtems__) || \
++    defined(__sparc__) || defined(__SPU__)
++typedef	unsigned long	ino_t;
++#else
++typedef	unsigned short	ino_t;
++#endif
++#endif /*__CYGWIN__*/
++
++#ifdef __MS_types__
++typedef unsigned long vm_offset_t;
++typedef unsigned long vm_size_t;
++
++#define __BIT_TYPES_DEFINED__
++
++typedef signed char int8_t;
++typedef unsigned char u_int8_t;
++typedef short int16_t;
++typedef unsigned short u_int16_t;
++typedef int int32_t;
++typedef unsigned int u_int32_t;
++typedef long long int64_t;
++typedef unsigned long long u_int64_t;
++typedef int32_t register_t;
++#endif /* __MS_types__ */
++
++/*
++ * All these should be machine specific - right now they are all broken.
++ * However, for all of Cygnus' embedded targets, we want them to all be
++ * the same.  Otherwise things like sizeof (struct stat) might depend on
++ * how the file was compiled (e.g. -mint16 vs -mint32, etc.).
++ */
++
++#ifndef __CYGWIN__	/* which defines these types in it's own types.h. */
++typedef _off_t	off_t;
++typedef __dev_t dev_t;
++typedef __uid_t uid_t;
++typedef __gid_t gid_t;
++#endif
++
++#if defined(__XMK__)
++typedef signed char pid_t;
++#else
++typedef int pid_t;
++#endif
++
++#if defined(__rtems__)
++typedef _mode_t mode_t;
++#endif
++
++#ifndef __CYGWIN__
++typedef	long key_t;
++#endif
++typedef _ssize_t ssize_t;
++
++#if !defined(__CYGWIN__) && !defined(__rtems__)
++#ifdef __MS_types__
++typedef	char *	addr_t;
++typedef int mode_t;
++#else
++#if defined (__sparc__) && !defined (__sparc_v9__)
++#ifdef __svr4__
++typedef unsigned long mode_t;
++#else
++typedef unsigned short mode_t;
++#endif
++#else
++typedef unsigned int mode_t _ST_INT32;
++#endif
++#endif /* ! __MS_types__ */
++#endif /*__CYGWIN__*/
++
++typedef unsigned short nlink_t;
++
++/* We don't define fd_set and friends if we are compiling POSIX
++   source, or if we have included (or may include as indicated
++   by __USE_W32_SOCKETS) the W32api winsock[2].h header which
++   defines Windows versions of them.   Note that a program which
++   includes the W32api winsock[2].h header must know what it is doing;
++   it must not call the cygwin32 select function.
++*/
++# if !(defined (_POSIX_SOURCE) || defined (_WINSOCK_H) || defined (_WINSOCKAPI_) || defined (__USE_W32_SOCKETS)) 
++#  define _SYS_TYPES_FD_SET
++#  define	NBBY	8		/* number of bits in a byte */
++/*
++ * Select uses bit masks of file descriptors in longs.
++ * These macros manipulate such bit fields (the filesystem macros use chars).
++ * FD_SETSIZE may be defined by the user, but the default here
++ * should be >= NOFILE (param.h).
++ */
++#  ifndef	FD_SETSIZE
++#	define	FD_SETSIZE	64
++#  endif
++
++typedef	long	fd_mask;
++#  define	NFDBITS	(sizeof (fd_mask) * NBBY)	/* bits per mask */
++#  ifndef	howmany
++#	define	howmany(x,y)	(((x)+((y)-1))/(y))
++#  endif
++
++/* We use a macro for fd_set so that including Sockets.h afterwards
++   can work.  */
++typedef	struct _types_fd_set {
++	fd_mask	fds_bits[howmany(FD_SETSIZE, NFDBITS)];
++} _types_fd_set;
++
++#define fd_set _types_fd_set
++
++#  define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1L << ((n) % NFDBITS)))
++#  define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1L << ((n) % NFDBITS)))
++#  define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1L << ((n) % NFDBITS)))
++#  define	FD_ZERO(p)	(__extension__ (void)({ \
++     size_t __i; \
++     char *__tmp = (char *)p; \
++     for (__i = 0; __i < sizeof (*(p)); ++__i) \
++       *__tmp++ = 0; \
++}))
++
++# endif	/* !(defined (_POSIX_SOURCE) || defined (_WINSOCK_H) || defined (_WINSOCKAPI_) || defined (__USE_W32_SOCKETS)) */
++
++#undef __MS_types__
++#undef _ST_INT32
++
++
++#ifndef __clockid_t_defined
++typedef _CLOCKID_T_ clockid_t;
++#define __clockid_t_defined
++#endif
++
++#ifndef __timer_t_defined
++typedef _TIMER_T_ timer_t;
++#define __timer_t_defined
++#endif
++
++typedef unsigned long useconds_t;
++
++#ifndef _SUSECONDS_T_DECLARED
++typedef	__suseconds_t	suseconds_t;
++#define	_SUSECONDS_T_DECLARED
++#endif
++
++typedef	__int64_t	sbintime_t;
++
++#include <sys/features.h>
++
++
++/* Cygwin will probably never have full posix compliance due to little things
++ * like an inability to set the stackaddress. Cygwin is also using void *  
++ * pointers rather than structs to ensure maximum binary compatability with
++ * previous releases.
++ * This means that we don't use the types defined here, but rather in
++ * <cygwin/types.h>
++ */
++#if defined(_POSIX_THREADS) && !defined(__CYGWIN__)
++
++#include <sys/sched.h>
++
++/*
++ *  2.5 Primitive System Data Types,  P1003.1c/D10, p. 19.
++ */
++
++#if defined(__XMK__)
++typedef unsigned int pthread_t;          /* identify a thread */
++#else
++typedef __uint32_t pthread_t;            /* identify a thread */
++#endif
++
++/* P1003.1c/D10, p. 118-119 */
++#define PTHREAD_SCOPE_PROCESS 0
++#define PTHREAD_SCOPE_SYSTEM  1
++
++/* P1003.1c/D10, p. 111 */
++#define PTHREAD_INHERIT_SCHED  1      /* scheduling policy and associated */
++                                      /*   attributes are inherited from */
++                                      /*   the calling thread. */
++#define PTHREAD_EXPLICIT_SCHED 2      /* set from provided attribute object */
++
++/* P1003.1c/D10, p. 141 */
++#define PTHREAD_CREATE_DETACHED 0
++#define PTHREAD_CREATE_JOINABLE  1
++
++#if defined(__rtems__)
++  #include <sys/cpuset.h>
++#endif
++
++#if defined(__XMK__)
++typedef struct pthread_attr_s {
++  int contentionscope;
++  struct sched_param schedparam;
++  int  detachstate;
++  void *stackaddr;
++  size_t stacksize;
++} pthread_attr_t;
++
++#define PTHREAD_STACK_MIN       200
++
++#else /* !defined(__XMK__) */
++typedef struct {
++  int is_initialized;
++  void *stackaddr;
++  int stacksize;
++  int contentionscope;
++  int inheritsched;
++  int schedpolicy;
++  struct sched_param schedparam;
++#if defined(__rtems__)
++  size_t guardsize;
++#endif
++
++  /* P1003.4b/D8, p. 54 adds cputime_clock_allowed attribute.  */
++#if defined(_POSIX_THREAD_CPUTIME)
++  int  cputime_clock_allowed;  /* see time.h */
++#endif
++  int  detachstate;
++#if defined(__rtems__)
++  size_t affinitysetsize;
++  cpu_set_t *affinityset;
++  cpu_set_t affinitysetpreallocated;
++#endif
++} pthread_attr_t;
++
++#endif /* !defined(__XMK__) */
++
++#if defined(_POSIX_THREAD_PROCESS_SHARED)
++/* NOTE: P1003.1c/D10, p. 81 defines following values for process_shared.  */
++
++#define PTHREAD_PROCESS_PRIVATE 0 /* visible within only the creating process */
++#define PTHREAD_PROCESS_SHARED  1 /* visible too all processes with access to */
++                                  /*   the memory where the resource is */
++                                  /*   located */
++#endif
++
++#if defined(_POSIX_THREAD_PRIO_PROTECT)
++/* Mutexes */
++
++/* Values for blocking protocol. */
++
++#define PTHREAD_PRIO_NONE    0
++#define PTHREAD_PRIO_INHERIT 1
++#define PTHREAD_PRIO_PROTECT 2
++#endif
++
++#if defined(_UNIX98_THREAD_MUTEX_ATTRIBUTES)
++
++/* Values for mutex type */
++
++/* The following defines are part of the X/Open System Interface (XSI). */
++
++/*
++ * This type of mutex does not detect deadlock. A thread attempting to
++ * relock this mutex without first unlocking it shall deadlock. Attempting
++ * to unlock a mutex locked by a different thread results in undefined
++ * behavior.  Attempting to unlock an unlocked mutex results in undefined
++ * behavior.
++ */
++#define PTHREAD_MUTEX_NORMAL     0
++
++/*
++ * A thread attempting to relock this mutex without first unlocking
++ * it shall succeed in locking the mutex.  The relocking deadlock which
++ * can occur with mutexes of type PTHREAD_MUTEX_NORMAL cannot occur with
++ * this type of mutex.  Multiple locks of this mutex shall require the
++ * same number of unlocks to release the mutex before another thread can
++ * acquire the mutex. A thread attempting to unlock a mutex which another
++ * thread has locked shall return with an error.  A thread attempting to
++ * unlock an unlocked mutex shall return with an error.
++ */
++#define PTHREAD_MUTEX_RECURSIVE  1
++
++/* 
++ * This type of mutex provides error checking. A thread attempting
++ * to relock this mutex without first unlocking it shall return with an
++ * error. A thread attempting to unlock a mutex which another thread has
++ * locked shall return with an error. A thread attempting to unlock an
++ * unlocked mutex shall return with an error.
++ */
++#define PTHREAD_MUTEX_ERRORCHECK 2
++
++/*
++ * Attempting to recursively lock a mutex of this type results
++ * in undefined behavior. Attempting to unlock a mutex of this type
++ * which was not locked by the calling thread results in undefined
++ * behavior. Attempting to unlock a mutex of this type which is not locked
++ * results in undefined behavior. An implementation may map this mutex to
++ * one of the other mutex types.
++ */
++#define PTHREAD_MUTEX_DEFAULT    3
++
++#endif /* !defined(_UNIX98_THREAD_MUTEX_ATTRIBUTES) */
++
++#if defined(__XMK__)
++typedef unsigned int pthread_mutex_t;    /* identify a mutex */
++
++typedef struct {
++  int type;
++} pthread_mutexattr_t;
++
++#else /* !defined(__XMK__) */
++typedef __uint32_t pthread_mutex_t;      /* identify a mutex */
++
++typedef struct {
++  int   is_initialized;
++#if defined(_POSIX_THREAD_PROCESS_SHARED)
++  int   process_shared;  /* allow mutex to be shared amongst processes */
++#endif
++#if defined(_POSIX_THREAD_PRIO_PROTECT)
++  int   prio_ceiling;
++  int   protocol;
++#endif
++#if defined(_UNIX98_THREAD_MUTEX_ATTRIBUTES)
++  int type;
++#endif
++  int   recursive;
++} pthread_mutexattr_t;
++#endif /* !defined(__XMK__) */
++
++/* Condition Variables */
++
++typedef __uint32_t pthread_cond_t;       /* identify a condition variable */
++
++typedef struct {
++  int   is_initialized;
++#if defined(_POSIX_THREAD_PROCESS_SHARED)
++  int   process_shared;       /* allow this to be shared amongst processes */
++#endif
++} pthread_condattr_t;         /* a condition attribute object */
++
++/* Keys */
++
++typedef __uint32_t pthread_key_t;        /* thread-specific data keys */
++
++typedef struct {
++  int   is_initialized;  /* is this structure initialized? */
++  int   init_executed;   /* has the initialization routine been run? */
++} pthread_once_t;       /* dynamic package initialization */
++#else
++#if defined (__CYGWIN__)
++#include <cygwin/types.h>
++#endif
++#endif /* defined(_POSIX_THREADS) */
++
++/* POSIX Barrier Types */
++
++#if defined(_POSIX_BARRIERS)
++typedef __uint32_t pthread_barrier_t;        /* POSIX Barrier Object */
++typedef struct {
++  int   is_initialized;  /* is this structure initialized? */
++#if defined(_POSIX_THREAD_PROCESS_SHARED)
++  int   process_shared;       /* allow this to be shared amongst processes */
++#endif
++} pthread_barrierattr_t;
++#endif /* defined(_POSIX_BARRIERS) */
++
++/* POSIX Spin Lock Types */
++
++#if !defined (__CYGWIN__)
++#if defined(_POSIX_SPIN_LOCKS)
++typedef __uint32_t pthread_spinlock_t;        /* POSIX Spin Lock Object */
++#endif /* defined(_POSIX_SPIN_LOCKS) */
++
++/* POSIX Reader/Writer Lock Types */
++
++#if defined(_POSIX_READER_WRITER_LOCKS)
++typedef __uint32_t pthread_rwlock_t;         /* POSIX RWLock Object */
++typedef struct {
++  int   is_initialized;       /* is this structure initialized? */
++#if defined(_POSIX_THREAD_PROCESS_SHARED)
++  int   process_shared;       /* allow this to be shared amongst processes */
++#endif
++} pthread_rwlockattr_t;
++#endif /* defined(_POSIX_READER_WRITER_LOCKS) */
++#endif /* __CYGWIN__ */
++
++#endif  /* !__need_inttypes */
++
++#undef __need_inttypes
++
++#endif	/* _SYS_TYPES_H */
+diff -Naur newlib-2.2.0.20151023/newlib/libc/stdlib/assert.c newlib-2.2.0.20151023_new/newlib/libc/stdlib/assert.c
+--- newlib-2.2.0.20151023/newlib/libc/stdlib/assert.c	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/stdlib/assert.c	2019-08-19 13:05:34.700000000 -0400
+@@ -47,6 +47,8 @@
+ #include <stdlib.h>
+ #include <stdio.h>
+ 
++#if 0
++
+ #ifndef HAVE_ASSERT_FUNC
+ /* func can be NULL, in which case no function information is given.  */
+ void
+@@ -74,3 +76,4 @@
+    __assert_func (file, line, NULL, failedexpr);
+   /* NOTREACHED */
+ }
++#endif
+diff -Naur newlib-2.2.0.20151023/newlib/libc/sys/sh/ftruncate.c newlib-2.2.0.20151023_new/newlib/libc/sys/sh/ftruncate.c
+--- newlib-2.2.0.20151023/newlib/libc/sys/sh/ftruncate.c	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/sys/sh/ftruncate.c	2019-08-19 13:05:34.700000000 -0400
+@@ -1,9 +1 @@
+-#include <_ansi.h>
+-#include <sys/types.h>
+-#include "sys/syscall.h"
+-
+-int
+-ftruncate (int file, off_t length)
+-{
+-  return __trap34 (SYS_ftruncate, file, length, 0);
+-}
++/* Nothing here. */
+diff -Naur newlib-2.2.0.20151023/newlib/libc/sys/sh/sys/lock.h newlib-2.2.0.20151023_new/newlib/libc/sys/sh/sys/lock.h
+--- newlib-2.2.0.20151023/newlib/libc/sys/sh/sys/lock.h	1969-12-31 19:00:00.000000000 -0500
++++ newlib-2.2.0.20151023_new/newlib/libc/sys/sh/sys/lock.h	2019-08-19 13:05:34.700000000 -0400
+@@ -0,0 +1,51 @@
++/* KallistiOS ##version##
++
++   lock_common.h
++   Copyright (C)2004 Dan Potter
++
++*/
++
++#ifndef __SYS_LOCK_H__
++#define __SYS_LOCK_H__
++
++typedef struct {
++	void	* owner;
++	int	nest;
++	volatile int lock;
++} __newlib_recursive_lock_t;
++
++#define __NEWLIB_RECURSIVE_LOCK_INIT { (void *)0, 0, 0 }
++
++typedef volatile int __newlib_lock_t;
++#define __NEWLIB_LOCK_INIT 0
++
++typedef __newlib_lock_t _LOCK_T;
++typedef __newlib_recursive_lock_t _LOCK_RECURSIVE_T;
++
++#define __LOCK_INIT(class,lock) class _LOCK_T lock = __NEWLIB_LOCK_INIT;
++#define __LOCK_INIT_RECURSIVE(class,lock) class _LOCK_RECURSIVE_T lock = __NEWLIB_RECURSIVE_LOCK_INIT;
++#define __lock_init(lock) __newlib_lock_init(&(lock))
++#define __lock_init_recursive(lock) __newlib_lock_init_recursive(&(lock))
++#define __lock_close(lock) __newlib_lock_close(&(lock))
++#define __lock_close_recursive(lock) __newlib_lock_close_recursive(&(lock))
++#define __lock_acquire(lock) __newlib_lock_acquire(&(lock))
++#define __lock_acquire_recursive(lock) __newlib_lock_acquire_recursive(&(lock))
++#define __lock_try_acquire(lock) __newlib_lock_try_acquire(&(lock))
++#define __lock_try_acquire_recursive(lock) __newlib_lock_try_acquire_recursive(&(lock))
++#define __lock_release(lock) __newlib_lock_release(&(lock))
++#define __lock_release_recursive(lock) __newlib_lock_release_recursive(&(lock))
++
++void __newlib_lock_init(__newlib_lock_t *);
++void __newlib_lock_close(__newlib_lock_t *);
++void __newlib_lock_acquire(__newlib_lock_t *);
++void __newlib_lock_try_acquire(__newlib_lock_t *);
++void __newlib_lock_release(__newlib_lock_t *);
++
++void __newlib_lock_init_recursive(__newlib_recursive_lock_t *);
++void __newlib_lock_close_recursive(__newlib_recursive_lock_t *);
++void __newlib_lock_acquire_recursive(__newlib_recursive_lock_t *);
++void __newlib_lock_try_acquire_recursive(__newlib_recursive_lock_t *);
++void __newlib_lock_release_recursive(__newlib_recursive_lock_t *);
++
++
++#endif // __NEWLIB_LOCK_COMMON_H
+diff -Naur newlib-2.2.0.20151023/newlib/libc/sys/sh/syscalls.c newlib-2.2.0.20151023_new/newlib/libc/sys/sh/syscalls.c
+--- newlib-2.2.0.20151023/newlib/libc/sys/sh/syscalls.c	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/sys/sh/syscalls.c	2019-08-19 13:05:34.700000000 -0400
+@@ -1,228 +1,2 @@
+-#include <_ansi.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <sys/time.h>
+-#include "sys/syscall.h"
+-int errno;
+-
+-/* This is used by _sbrk.  */
+-register char *stack_ptr asm ("r15");
+-
+-int
+-_read (int file,
+-       char *ptr,
+-       int len)
+-{
+-  return __trap34 (SYS_read, file, ptr, len);
+-}
+-
+-int
+-_lseek (int file,
+-	int ptr,
+-	int dir)
+-{
+-  return __trap34 (SYS_lseek, file, ptr, dir);
+-}
+-
+-int
+-_write ( int file,
+-	 char *ptr,
+-	 int len)
+-{
+-  return __trap34 (SYS_write, file, ptr, len);
+-}
+-
+-int
+-_close (int file)
+-{
+-  return __trap34 (SYS_close, file, 0, 0);
+-}
+-
+-int
+-_link (char *old, char *new)
+-{
+-  return -1;
+-}
+-
+-caddr_t
+-_sbrk (int incr)
+-{
+-  extern char end;		/* Defined by the linker */
+-  static char *heap_end;
+-  char *prev_heap_end;
+-
+-  if (heap_end == 0)
+-    {
+-      heap_end = &end;
+-    }
+-  prev_heap_end = heap_end;
+-  if (heap_end + incr > stack_ptr)
+-    {
+-      _write (1, "Heap and stack collision\n", 25);
+-      abort ();
+-    }
+-  heap_end += incr;
+-  return (caddr_t) prev_heap_end;
+-}
+-
+-int
+-_fstat (int file,
+-	struct stat *st)
+-{
+-  st->st_mode = S_IFCHR;
+-  return 0;
+-}
+-
+-int
+-_open (const char *path,
+-	int flags)
+-{
+-  return __trap34 (SYS_open, path, flags, 0);
+-}
+-
+-int
+-_creat (const char *path,
+-	int mode)
+-{
+-  return __trap34 (SYS_creat, path, mode, 0);
+-}
+-
+-int
+-_unlink ()
+-{
+-  return -1;
+-}
+-
+-isatty (fd)
+-     int fd;
+-{
+-  return 1;
+-}
+-
+-_isatty (fd)
+-     int fd;
+-{
+-  return 1;
+-}
+-
+-
+-_exit (n)
+-{
+-  return __trap34 (SYS_exit, n, 0, 0);
+-}
+-
+-_kill (n, m)
+-{
+-  return __trap34 (SYS_exit, 0xdead, 0, 0);
+-}
+-
+-_getpid (n)
+-{
+-  return 1;
+-}
+-
+-_raise ()
+-{
+-}
+-
+-int
+-_stat (const char *path, struct stat *st)
+-
+-{
+-  return __trap34 (SYS_stat, path, st, 0);
+-}
+-
+-int
+-_chmod (const char *path, short mode)
+-{
+-  return __trap34 (SYS_chmod, path, mode);
+-}
+-
+-int
+-_chown (const char *path, short owner, short group)
+-{
+-  return __trap34 (SYS_chown, path, owner, group);
+-}
+-
+-int
+-_utime (path, times)
+-     const char *path;
+-     char *times;
+-{
+-  return __trap34 (SYS_utime, path, times);
+-}
+-
+-int
+-_fork ()
+-{
+-  return __trap34 (SYS_fork);
+-}
+-
+-int
+-_wait (statusp)
+-     int *statusp;
+-{
+-  return __trap34 (SYS_wait);
+-}
+-
+-int
+-_execve (const char *path, char *const argv[], char *const envp[])
+-{
+-  return __trap34 (SYS_execve, path, argv, envp);
+-}
+-
+-int
+-_execv (const char *path, char *const argv[])
+-{
+-  return __trap34 (SYS_execv, path, argv);
+-}
+-
+-int
+-_pipe (int *fd)
+-{
+-  return __trap34 (SYS_pipe, fd);
+-}
+-
+-/* This is only provided because _gettimeofday_r and _times_r are
+-   defined in the same module, so we avoid a link error.  */
+-clock_t
+-_times (struct tms *tp)
+-{
+-  return -1;
+-}
+-
+-int
+-_gettimeofday (struct timeval *tv, void *tz)
+-{
+-  tv->tv_usec = 0;
+-  tv->tv_sec = __trap34 (SYS_time);
+-  return 0;
+-}
+-
+-static inline int
+-__setup_argv_for_main (int argc)
+-{
+-  char **argv;
+-  int i = argc;
+-
+-  argv = __builtin_alloca ((1 + argc) * sizeof (*argv));
+-
+-  argv[i] = NULL;
+-  while (i--) {
+-    argv[i] = __builtin_alloca (1 + __trap34 (SYS_argnlen, i));
+-    __trap34 (SYS_argn, i, argv[i]);
+-  }
+-
+-  return main (argc, argv);
+-}
+-
+-int
+-__setup_argv_and_call_main ()
+-{
+-  int argc = __trap34 (SYS_argc);
+-
+-  if (argc <= 0)
+-    return main (argc, NULL);
+-  else
+-    return __setup_argv_for_main (argc);
+-}
++// This is put in here to cause link errors if a proper newlib isn't present.
++int __newlib_kos_patch = 1;
+diff -Naur newlib-2.2.0.20151023/newlib/libc/sys/sh/trap.S newlib-2.2.0.20151023_new/newlib/libc/sys/sh/trap.S
+--- newlib-2.2.0.20151023/newlib/libc/sys/sh/trap.S	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/sys/sh/trap.S	2019-08-19 13:05:34.700000000 -0400
+@@ -1,43 +0,0 @@
+-#if __SH5__
+-	.mode	SHmedia
+-#if __SH5__ == 32 && __SHMEDIA__
+-	.section	.text..SHmedia32, "ax"
+-#else
+-	.text
+-#endif
+-	.global ___trap34
+-___trap34:
+-	movi	34, r0
+-	trapa	r0
+-	pt/l	ret, tr1
+-	ptabs/l	r18, tr0
+-	beqi	r1, 0, tr1
+-#if __SH5__ == 64
+-	movi	((_errno >> 48) & 65535), r0
+-	shori	((_errno >> 32) & 65535), r0
+-	shori	((_errno >> 16) & 65535), r0
+-#else
+-	movi	((_errno >> 16) & 65535), r0
+-#endif
+-	shori	(_errno & 65535), r0
+-	stx.l	r0, r63, r1
+-ret:
+-	blink	tr0, r63
+-	
+-#else
+-	.text
+-	.global	___trap34
+-___trap34:
+-	trapa	#34
+-	tst	r1,r1	! r1 is errno
+-	bt	ret
+-	mov.l	perrno,r2
+-	mov.l	r1,@r2
+-ret:
+-	rts
+-	nop
+-	
+-	.align	2
+-perrno:
+-	.long	_errno
+-#endif /* ! __SH5__ */
+diff -Naur newlib-2.2.0.20151023/newlib/libc/sys/sh/truncate.c newlib-2.2.0.20151023_new/newlib/libc/sys/sh/truncate.c
+--- newlib-2.2.0.20151023/newlib/libc/sys/sh/truncate.c	2015-10-23 08:30:40.000000000 -0400
++++ newlib-2.2.0.20151023_new/newlib/libc/sys/sh/truncate.c	2019-08-19 13:05:34.700000000 -0400
+@@ -1,9 +1 @@
+-#include <_ansi.h>
+-#include <sys/types.h>
+-#include "sys/syscall.h"
+-
+-int
+-truncate (const char *path, off_t length)
+-{
+-  return __trap34 (SYS_truncate, path, length, 0);
+-}
++/* Nothing here. */
