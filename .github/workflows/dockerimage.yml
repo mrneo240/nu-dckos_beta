@@ -16,4 +16,4 @@ jobs:
         name: haydenkow/nu_dckos-beta
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        context: gcc_710_newlib_220
+        path: gcc_710_newlib_220
