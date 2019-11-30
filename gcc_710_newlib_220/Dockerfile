@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN echo $PWD && ls -la && echo ATTEMPT 1
 
-WORKDIR /src
+WORKDIR /github/workspace
 
 RUN echo $PWD && ls -la && echo ATTEMPT 2 1>&2 && exit 1
 
