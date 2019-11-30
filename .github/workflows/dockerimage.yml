@@ -10,10 +10,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
+    - run: ls -la
     - name: Publish to Registry
       uses: elgohr/Publish-Docker-Github-Action@master
       with:
         name: haydenkow/nu_dckos-beta
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        path: gcc_710_newlib_220
+        workdir: gcc_710_newlib_220
