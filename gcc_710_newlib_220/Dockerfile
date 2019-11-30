@@ -2,9 +2,11 @@ FROM gcc:7.4 as builder
 MAINTAINER HaydenKow <hayden@hkowsoftware.com>
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN echo $PWD && ls -la && echo ATTEMPT 1
+
 WORKDIR /src
 
-RUN ls -la && echo ERROR: 1>&2 && exit 1
+RUN echo $PWD && ls -la && echo ATTEMPT 2 1>&2 && exit 1
 
 # Prerequirements / second line for libs / third line for mksdiso & img4dc
 # Build Toolchain 
