@@ -17,9 +17,8 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /opt/toolchains/dc \
-    
-	&& git clone --depth=1 git://git.code.sf.net/p/cadcdev/kallistios /opt/toolchains/dc/kos  \
-	&& git clone --depth=1 --recursive git://git.code.sf.net/p/cadcdev/kos-ports /opt/toolchains/dc/kos-ports \
+    && git clone --depth=1 git://git.code.sf.net/p/cadcdev/kallistios /opt/toolchains/dc/kos  \
+    && git clone --depth=1 --recursive git://git.code.sf.net/p/cadcdev/kos-ports /opt/toolchains/dc/kos-ports \
     && rm -rf /opt/toolchains/dc/kos-ports/libGL \
     && cp /opt/toolchains/dc/kos/doc/environ.sh.sample /opt/toolchains/dc/kos/environ.sh \
     && sed -i 's/-fno-rtti//' /opt/toolchains/dc/kos/environ.sh \
@@ -28,7 +27,7 @@ RUN apt-get update \
     && echo 'source /opt/toolchains/dc/kos/environ.sh' >> /root/.bashrc 
 
 # Build Toolchain   
-RUN git clone --depth=1 https://github.com/mrneo240/nu-dckos_beta.git . \
+RUN curl -SL https://github.com/mrneo240/nu-dckos_beta/archive/v1.tar.gz | tar --strip-components=1 -xzf - -C . \
 	&& bash download.sh \
 	&& bash unpack.sh \
 	&& make erase=1 patch build gdb \
