@@ -2,8 +2,6 @@ FROM gcc:7.4 as builder
 MAINTAINER HaydenKow <hayden@hkowsoftware.com>
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN ls -la /github/workspace && exit 1
-
 WORKDIR /src
 
 # Prerequirements / second line for libs / third line for mksdiso & img4dc
@@ -19,6 +17,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /opt/toolchains/dc \
+    
 	&& git clone --depth=1 git://git.code.sf.net/p/cadcdev/kallistios /opt/toolchains/dc/kos  \
 	&& git clone --depth=1 --recursive git://git.code.sf.net/p/cadcdev/kos-ports /opt/toolchains/dc/kos-ports \
     && rm -rf /opt/toolchains/dc/kos-ports/libGL \
@@ -29,7 +28,8 @@ RUN apt-get update \
     && echo 'source /opt/toolchains/dc/kos/environ.sh' >> /root/.bashrc 
 
 # Build Toolchain   
-RUN bash download.sh \
+RUN git clone --depth=1 https://github.com/mrneo240/nu-dckos_beta.git . \
+	&& bash download.sh \
 	&& bash unpack.sh \
 	&& make erase=1 patch build gdb \
 	&& bash cleanup.sh
@@ -50,7 +50,6 @@ RUN apt-get update \
         make \
         git \
         wget \
-        autoconf \
     && echo "dash dash/sh boolean false" | debconf-set-selections \
     && dpkg-reconfigure --frontend=noninteractive dash \
     && apt-get clean \
