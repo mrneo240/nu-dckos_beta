@@ -31,47 +31,47 @@ done
 # Download everything.
 if command -v wget >/dev/null 2>&1; then
     echo "Downloading binutils-$BINUTILS_VER..."
-    wget –quiet -c ftp://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VER.tar.bz2 || exit 1
+    wget -q --no-hsts -c ftp://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VER.tar.bz2 || exit 1
     echo "Downloading GCC $GCC_VER..."
-    wget –quiet -c ftp://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.gz || exit 1
+    wget -q --no-hsts -c ftp://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.gz || exit 1
     echo "Downloading Newlib $NEWLIB_VER..."
-    wget –quiet -c ftp://sourceware.org/pub/newlib/newlib-$NEWLIB_VER$NEWLIB_EXTRA.tar.gz || exit 1
+    wget -q --no-hsts -c ftp://sourceware.org/pub/newlib/newlib-$NEWLIB_VER$NEWLIB_EXTRA.tar.gz || exit 1
 
     if [ -n "$GMP_VER" ]; then
         echo "Downloading GMP $GMP_VER..."
-        wget –quiet -c ftp://gcc.gnu.org/pub/gcc/infrastructure/gmp-$GMP_VER.tar.bz2 || exit 1
+        wget -q --no-hsts -c ftp://gcc.gnu.org/pub/gcc/infrastructure/gmp-$GMP_VER.tar.bz2 || exit 1
     fi
 
     if [ -n "$MPFR_VER" ]; then
         echo "Downloading MPFR $MPFR_VER..."
-        wget –quiet -c ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-$MPFR_VER.tar.bz2 || exit 1
+        wget -q --no-hsts -c ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-$MPFR_VER.tar.bz2 || exit 1
     fi
 
     if [ -n "$MPC_VER" ]; then
         echo "Downloading MPC $MPC_VER..."
-        wget –quiet -c ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-$MPC_VER.tar.gz || exit 1
+        wget -q --no-hsts -c ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-$MPC_VER.tar.gz || exit 1
     fi
 elif command -v curl >/dev/null 2>&1; then
     echo "Downloading Binutils $BINUTILS_VER..."
-    curl –silent -C - -O ftp://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VER.tar.bz2 || exit 1
+    curl -silent -C - -O ftp://ftp.gnu.org/gnu/binutils/binutils-$BINUTILS_VER.tar.bz2 || exit 1
     echo "Downloading GCC $GCC_VER..."
-    curl –silent -C - -O ftp://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.bz2 || exit 1
+    curl -silent -C - -O ftp://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.bz2 || exit 1
     echo "Downloading Newlib $NEWLIB_VER..."
-    curl –silent -C - -O ftp://sourceware.org/pub/newlib/newlib-$NEWLIB_VER$NEWLIB_EXTRA.tar.gz || exit 1
+    curl -silent -C - -O ftp://sourceware.org/pub/newlib/newlib-$NEWLIB_VER$NEWLIB_EXTRA.tar.gz || exit 1
 
     if [ -n "$GMP_VER" ]; then
         echo "Downloading GMP $GMP_VER..."
-        curl –silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/gmp-$GMP_VER.tar.bz2 || exit 1
+        curl -silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/gmp-$GMP_VER.tar.bz2 || exit 1
     fi
 
     if [ -n "$MPFR_VER" ]; then
         echo "Downloading MPFR $MPFR_VER..."
-        curl –silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-$MPFR_VER.tar.bz2 || exit 1
+        curl -silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/mpfr-$MPFR_VER.tar.bz2 || exit 1
     fi
 
     if [ -n "$MPC_VER" ]; then
         echo "Downloading MPC $MPC_VER..."
-        curl –silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-$MPC_VER.tar.gz || exit 1
+        curl -silent -C - -O ftp://gcc.gnu.org/pub/gcc/infrastructure/mpc-$MPC_VER.tar.gz || exit 1
     fi
 else
     echo >&2 "You must have either wget or cURL installed to use this script!"
