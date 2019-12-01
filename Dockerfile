@@ -53,8 +53,8 @@ RUN apt-get update \
     && dpkg-reconfigure --frontend=noninteractive dash \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && wget http://ftp.br.debian.org/debian/pool/main/n/ncurses/libncurses6_6.1+20190803-1_amd64.deb \
-    && wget http://ftp.br.debian.org/debian/pool/main/n/ncurses/libtinfo6_6.1+20190803-1_amd64.deb \
+    && wget http://http.us.debian.org/debian/pool/main/n/ncurses/libncurses6_6.1+20191019-1_amd64.deb \
+    && wget http://http.us.debian.org/debian/pool/main/n/ncurses/libtinfo6_6.1+20191019-1_amd64.deb \
     && dpkg -i *.deb \
     && rm *.deb \
     && chmod +x /opt/toolchains/dc/kos/environ.sh
