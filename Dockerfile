@@ -2,6 +2,8 @@ FROM gcc:7.4 as builder
 MAINTAINER HaydenKow <hayden@hkowsoftware.com>
 ENV DEBIAN_FRONTEND noninteractive
 
+RUN ls -la /github/workspace && exit 1
+
 WORKDIR /src
 
 # Prerequirements / second line for libs / third line for mksdiso & img4dc
