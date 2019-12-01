@@ -64,7 +64,7 @@ RUN sed -i '1isource /opt/toolchains/dc/kos/environ.sh\' /etc/bash.bashrc \
 
 WORKDIR /src
 COPY entry.sh /usr/local/bin/
-RUN rm -rf /usr/share/locale /usr/share/man /usr/share/doc
+RUN rm -rf /usr/share/locale /usr/share/man /usr/share/doc && chmod +x /usr/local/bin/entry.sh
 ENTRYPOINT ["entry.sh"]
 SHELL ["/bin/bash", "-l", "-c", "source /opt/toolchains/dc/kos/environ.sh"]
 CMD ["bash"]
