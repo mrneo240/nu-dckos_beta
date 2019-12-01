@@ -27,8 +27,8 @@ RUN apt-get update \
     && echo 'source /opt/toolchains/dc/kos/environ.sh' >> /root/.bashrc 
 
 # Build Toolchain   
-RUN curl -SL https://github.com/mrneo240/nu-dckos_beta/archive/v1.tar.gz | tar --strip-components=1 -xzf - -C . \
-	&& bash download.sh \
+RUN curl -SL https://github.com/mrneo240/nu-dckos_beta/archive/v1.tar.gz | tar --strip-components=1 -xzf - -C .
+RUN bash download.sh \
 	&& bash unpack.sh \
 	&& make erase=1 patch build gdb \
 	&& bash cleanup.sh
