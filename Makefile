@@ -43,7 +43,7 @@ binutils_ver=2.31.1
 gcc_ver=7.1.0
 newlib_ver=2.2.0
 newlib_extra=.20151023
-gdb_ver=7.6
+gdb_ver=7.11.1
 insight_ver=6.7.1
 
 # With GCC 4.x versions, the patches provide a kos thread model, so you should
@@ -52,7 +52,7 @@ insight_ver=6.7.1
 # single (why you would is beyond me, though).
 thread_model=kos
 erase=0
-verbose=1
+verbose=0
 
 # Set this value to -jn where n is the number of jobs you want to run with make.
 # If you only want one job, just set this to nothing (i.e, "makejobs=").
@@ -168,8 +168,8 @@ $(build_binutils): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --disable-werror CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 $(build_gcc_pass1) $(build_gcc_pass2): build = build-gcc-$(target)-$(gcc_ver)
@@ -180,8 +180,8 @@ $(build_gcc_pass1): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --without-headers --with-newlib --enable-languages=c --disable-libquadmath --disable-libssp --disable-tls $(extra_configure_args) CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install-strip DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install-strip DESTDIR=$(DESTDIR) $(to_log)
 
 $(build_newlib_sh4) $(build_newlib_arm): build = build-newlib-$(target)-$(newlib_ver)
 $(build_newlib_sh4) $(build_newlib_arm): src_dir = newlib-$(newlib_ver)$(newlib_extra)
@@ -191,8 +191,8 @@ $(build_newlib_sh4) $(build_newlib_arm): logdir
 	-mkdir -p $(build)
 	> $(log)
 	cd $(build); ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) $(extra_configure_args) $(extra_newlib_args) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 fixup-sh4-newlib: newlib_inc=$(DESTDIR)$(sh_prefix)/$(sh_target)/include
@@ -222,8 +222,8 @@ $(build_gcc_pass2): logdir
 	> $(log)
 	cd $(build);  ../$(src_dir)/configure --target=$(target) --prefix=$(prefix) --with-newlib --disable-libssp --disable-tls \
 	   --enable-threads=$(thread_model) --enable-languages=$(pass2_languages) $(extra_configure_args) CXX=$(CXX) $(to_log)
-	make $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
-	make -C $(build) install-strip DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) $(makejobs) -C $(build) DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C $(build) install-strip DESTDIR=$(DESTDIR) $(to_log)
 	$(clean_up)
 
 # ---- }}}}
@@ -231,17 +231,17 @@ $(build_gcc_pass2): logdir
 
 # GDB building
 
-gdb-$(gdb_ver).tar.bz2:
+gdb-$(gdb_ver).tar.gz:
 	@echo "+++ Downloading GDB..."
-	wget -c ftp://ftp.gnu.org/gnu/gdb/gdb-$(gdb_ver).tar.bz2
+	wget -c ftp://ftp.gnu.org/gnu/gdb/gdb-$(gdb_ver).tar.gz
 
-unpack_gdb: gdb-$(gdb_ver).tar.bz2 unpack_gdb_stamp
+unpack_gdb: gdb-$(gdb_ver).tar.gz unpack_gdb_stamp
 
-unpack_gdb_stamp: 
+unpack_gdb_stamp:
 	@echo "+++ Unpacking GDB..."
 	rm -f $@
 	rm -rf gdb-$(gdb_ver)
-	tar jxf gdb-$(gdb_ver).tar.bz2
+	tar xf gdb-$(gdb_ver).tar.gz
 	touch $@
 
 build_gdb: log = $(logdir)/gdb-$(gdb_ver).log
@@ -255,10 +255,10 @@ build_gdb_stamp:
 	rm -rf build-gdb-$(gdb_ver)
 	mkdir build-gdb-$(gdb_ver)
 	cd build-gdb-$(gdb_ver); ../gdb-$(gdb_ver)/configure \
+	    --disable-werror \
 	    --prefix=$(sh_prefix) \
-	    --target=$(sh_target) \
-		--disable-werror $(to_log)
-	make $(makejobs) -C build-gdb-$(gdb_ver) $(to_log)
+	    --target=$(sh_target) $(to_log)
+	$(MAKE) $(makejobs) -C build-gdb-$(gdb_ver) $(to_log)
 	touch $@
 
 install_gdb: log = $(logdir)/gdb-$(gdb_ver).log
@@ -268,7 +268,7 @@ install_gdb: build_gdb install_gdb_stamp
 install_gdb_stamp:
 	@echo "+++ Installing GDB..."
 	rm -f $@
-	make -C build-gdb-$(gdb_ver) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C build-gdb-$(gdb_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 gdb: install_gdb
@@ -300,10 +300,10 @@ build_insight_stamp:
 	rm -rf build-insight-$(insight_ver)
 	mkdir build-insight-$(insight_ver)
 	cd build-insight-$(insight_ver); ../insight-$(insight_ver)/configure \
+	    --disable-werror \
 	    --prefix=$(sh_prefix) \
-	    --target=$(sh_target) \
-		--disable-werror $(to_log)
-	make $(makejobs) -C build-insight-$(insight_ver) $(to_log)
+	    --target=$(sh_target) $(to_log)
+	$(MAKE) $(makejobs) -C build-insight-$(insight_ver) $(to_log)
 	touch $@
 
 install_insight: log = $(logdir)/insight-$(insight_ver).log
@@ -313,7 +313,7 @@ install_insight: build_insight install_insight_stamp
 install_insight_stamp:
 	@echo "+++ Installing INSIGHT..."
 	rm -f $@
-	make -C build-insight-$(insight_ver) install DESTDIR=$(DESTDIR) $(to_log)
+	$(MAKE) -C build-insight-$(insight_ver) install DESTDIR=$(DESTDIR) $(to_log)
 	touch $@
 
 insight: install_insight
@@ -328,7 +328,7 @@ clean:
 	-rm -rf build-gcc-$(arm_target)-$(gcc_ver)
 	-rm -rf build-binutils-$(sh_target)-$(binutils_ver)
 	-rm -rf build-binutils-$(arm_target)-$(binutils_ver)
-	-rm -rf build-gdb-$(gdb_ver) install_gdb_stamp build_gdb_stamp 
+	-rm -rf build-gdb-$(gdb_ver) $(gdb_ver).tar.gz $(gdb_ver) install_gdb_stamp build_gdb_stamp unpack_gdb_stamp
 	-rm -rf build-insight-$(gdb_ver) install_insight_stamp build_insight_stamp
 
 logdir:
