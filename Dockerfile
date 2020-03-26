@@ -23,7 +23,7 @@ RUN apt-get update \
     && rm -rf /opt/toolchains/dc/kos/examples \
     && cp /opt/toolchains/dc/kos/doc/environ.sh.sample /opt/toolchains/dc/kos/environ.sh \
     && sed -r -i 's/-fno-rtti|-fno-exceptions|-fno-operator-names//' /opt/toolchains/dc/kos/environ.sh \
-    && sed -r -i 's/fs_romdisk_mount|fs_romdisk_unmount//' /opt/toolchains/dc/kos/kernel/exports.txt
+    && sed -r -i 's/fs_romdisk_mount|fs_romdisk_unmount//' /opt/toolchains/dc/kos/kernel/exports.txt \
     && echo 'source /opt/toolchains/dc/kos/environ.sh' >> /root/.bashrc 
 
 # Build Toolchain   
