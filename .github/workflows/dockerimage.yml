@@ -7,7 +7,7 @@ jobs:
     - run: ls -la /home/runner/work/nu-dckos_beta/nu-dckos_beta
     - uses: actions/checkout@master
     - name: Publish to Registry
-      uses: elgohr/Publish-Docker-Github-Action@master
+      uses: elgohr/Publish-Docker-Github-Action@v5
       with:
         name: haydenkow/nu_dckos-beta
         username: ${{ secrets.DOCKER_USERNAME }}
